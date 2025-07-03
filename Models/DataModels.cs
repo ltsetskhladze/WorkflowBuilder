@@ -95,11 +95,9 @@ namespace WorkflowBuilder.Models
 
         public static WorkflowNodeType ToWorkflowNodeType(this WorkflowActivity activity)
         {
-            // First check the ActivityFeatureType
             if (activity.ActivityFeatureType == "Foreach")
                 return WorkflowNodeType.ForEach;
 
-            // Then map based on activity names and characteristics
             var name = activity.Name.ToLower();
             
             if (name.Contains("start") || activity.StepNo == 1)

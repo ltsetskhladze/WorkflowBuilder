@@ -4,13 +4,11 @@
 @inject global::WorkflowBuilder.Services.WorkflowEventService EventService
 
 <div class="figma-sidebar">
-    <!-- Top Section with Project Avatar -->
     <div class="sidebar-top">
         <div class="project-avatar">
             <span>MW</span>
         </div>
         
-        <!-- Load Sample Button -->
         <button class="load-sample-btn" @onclick="LoadSample" title="Load Sample Workflow">
             <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
                 <path d="M3.33333 13.3333L10 6.66667L16.6667 13.3333" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
@@ -19,7 +17,6 @@
         </button>
     </div>
 
-    <!-- Main Navigation Icons -->
     <div class="sidebar-menu">
         <button class="sidebar-item @(SelectedTool == WorkflowTool.Select ? "active" : "")" 
                 @onclick="() => SelectTool(WorkflowTool.Select)" 
@@ -47,10 +44,8 @@
             </svg>
         </button>
 
-        <!-- Workflow Node Tools Section -->
         <div class="sidebar-section-divider"></div>
 
-        <!-- Draggable Start Node -->
         <div class="draggable-tool" 
              draggable="true"
              @ondragstart="(e) => OnDragStart(e, WorkflowNodeType.Start)"
@@ -60,7 +55,6 @@
             </svg>
         </div>
 
-        <!-- Draggable If Condition Node -->
         <div class="draggable-tool"
              draggable="true"
              @ondragstart="(e) => OnDragStart(e, WorkflowNodeType.IfCondition)"
@@ -70,7 +64,6 @@
             </svg>
         </div>
 
-        <!-- Draggable Switch Node -->
         <div class="draggable-tool"
              draggable="true"
              @ondragstart="(e) => OnDragStart(e, WorkflowNodeType.Switch)"
@@ -80,7 +73,6 @@
             </svg>
         </div>
 
-        <!-- Draggable For Each Node -->
         <div class="draggable-tool"
              draggable="true"
              @ondragstart="(e) => OnDragStart(e, WorkflowNodeType.ForEach)"
@@ -91,7 +83,6 @@
             </svg>
         </div>
 
-        <!-- Draggable Scope Node -->
         <div class="draggable-tool"
              draggable="true"
              @ondragstart="(e) => OnDragStart(e, WorkflowNodeType.Scope)"
@@ -102,7 +93,6 @@
             </svg>
         </div>
 
-        <!-- Draggable End Node -->
         <div class="draggable-tool"
              draggable="true"
              @ondragstart="(e) => OnDragStart(e, WorkflowNodeType.End)"
@@ -146,7 +136,6 @@
         </button>
     </div>
 
-    <!-- Bottom Section -->
     <div class="sidebar-bottom">
         <button class="sidebar-item" @onclick="OpenSettings" title="Settings">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -174,7 +163,7 @@
 @code {
     [Parameter] public EventCallback<WorkflowTool> OnToolSelected { get; set; }
     
-    private WorkflowTool SelectedTool { get; set; } = WorkflowTool.Trigger; // Default to workflow (3rd item)
+    private WorkflowTool SelectedTool { get; set; } = WorkflowTool.Trigger;
 
     private async Task SelectTool(WorkflowTool tool)
     {
@@ -182,19 +171,16 @@
         await OnToolSelected.InvokeAsync(tool);
     }
 
-        private async Task OnDragStart(DragEventArgs e, WorkflowNodeType nodeType)
+    private async Task OnDragStart(DragEventArgs e, WorkflowNodeType nodeType)
     {
         try
         {
             await JSRuntime.InvokeVoidAsync("eval", $"window.dragNodeType = '{nodeType}';");
         }
-        catch (Exception ex)
+        catch
         {
-            // Silent error handling
         }
     }
-
-
 
     private void LoadSample()
     {
@@ -203,12 +189,10 @@
 
     private void OpenSettings()
     {
-        // Settings logic
     }
 
     private void ShowHelp()
     {
-        // Help logic
     }
 }
 

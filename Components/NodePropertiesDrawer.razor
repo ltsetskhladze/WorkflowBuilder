@@ -15,7 +15,6 @@
     @if (SelectedNode != null)
     {
         <div class="drawer-content">
-            <!-- Basic Properties -->
             <div class="property-group">
                 <label class="property-label">Title</label>
                 <input type="text" class="property-input" @bind="SelectedNode.Title" @bind:event="oninput" />
@@ -31,7 +30,6 @@
                 <textarea class="property-textarea" @bind="SelectedNode.Description" @bind:event="oninput" rows="3"></textarea>
             </div>
 
-            <!-- Filters Section -->
             <div class="property-section">
                 <h4>Filters</h4>
                 @if (SelectedNode.Filters.Any())
@@ -60,7 +58,6 @@
                 <button class="add-filter-btn" @onclick="AddFilter">+ Add Filter</button>
             </div>
 
-            <!-- Node Type Specific Properties -->
             @if (SelectedNode.NodeType == WorkflowNodeType.Start)
             {
                 <div class="property-section">
@@ -212,7 +209,6 @@
                 </div>
             }
 
-            <!-- Custom Properties -->
             <div class="property-section">
                 <h4>Custom Properties</h4>
                 @foreach (var prop in CustomProperties)
@@ -294,7 +290,6 @@
         set => SetProperty("httpMethod", value);
     }
 
-    // Switch node properties
     private string SwitchVariable
     {
         get => SelectedNode?.Properties.GetValueOrDefault("switchVariable", "")?.ToString() ?? "";
@@ -307,14 +302,12 @@
         set => SetProperty("switchDefault", value);
     }
 
-    // ForEach node additional properties
     private string ForEachParallel
     {
         get => SelectedNode?.Properties.GetValueOrDefault("forEachParallel", "false")?.ToString() ?? "false";
         set => SetProperty("forEachParallel", value);
     }
 
-    // Scope node properties
     private string ScopeName
     {
         get => SelectedNode?.Properties.GetValueOrDefault("scopeName", "")?.ToString() ?? "";
@@ -327,7 +320,6 @@
         set => SetProperty("scopeErrorHandling", value);
     }
 
-    // End node properties
     private string EndStatus
     {
         get => SelectedNode?.Properties.GetValueOrDefault("endStatus", "success")?.ToString() ?? "success";

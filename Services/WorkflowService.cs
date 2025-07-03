@@ -28,9 +28,8 @@ namespace WorkflowBuilder.Services
                     return JsonSerializer.Deserialize<WorkflowData>(jsonContent, options);
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine($"Error loading workflow: {ex.Message}");
             }
             return null;
         }
@@ -58,23 +57,18 @@ namespace WorkflowBuilder.Services
             var spacingX = 200;
             var spacingY = 150;
 
-            // Simple linear layout - arrange nodes horizontally by step number
-            // Since we don't have ParentStepNo, we'll use a simple flow layout
             var sortedActivities = activities.OrderBy(a => a.StepNo).ToList();
             
             for (int i = 0; i < sortedActivities.Count; i++)
             {
                 var activity = sortedActivities[i];
                 
-                // Place nodes in a flow - main path horizontally, branches vertically
                 if (activity.StepNo <= 3)
                 {
-                    // Main flow nodes
                     positions[activity.StepNo] = new Point(startX + (activity.StepNo - 1) * spacingX, startY);
                 }
                 else
                 {
-                    // Branch nodes - place below main flow
                     positions[activity.StepNo] = new Point(startX + (activity.StepNo - 1) * spacingX, startY + spacingY);
                 }
             }
@@ -99,15 +93,7 @@ namespace WorkflowBuilder.Services
                         {
                             links.Add((fromNode, toNode, jump.JumpType));
                         }
-                        else
-                        {
-                            Console.WriteLine($"Warning: Could not find target node for step {jump.ToStepNo}");
-                        }
                     }
-                }
-                else
-                {
-                    Console.WriteLine($"Warning: Could not find source node for step {activity.StepNo}");
                 }
             }
 
