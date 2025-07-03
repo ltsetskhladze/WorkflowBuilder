@@ -1,0 +1,225 @@
+@using WorkflowBuilder.Models
+@namespace WorkflowBuilder.Layout
+
+<div class="figma-sidebar">
+    <!-- Top Section with Project Avatar -->
+    <div class="sidebar-top">
+        <div class="project-avatar">
+            <span>MW</span>
+        </div>
+    </div>
+
+    <!-- Main Navigation Icons -->
+    <div class="sidebar-menu">
+        <button class="sidebar-item @(SelectedTool == WorkflowTool.Select ? "active" : "")" 
+                @onclick="() => SelectTool(WorkflowTool.Select)" 
+                title="Search">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M9.16667 15.8333C12.8486 15.8333 15.8333 12.8486 15.8333 9.16667C15.8333 5.48477 12.8486 2.5 9.16667 2.5C5.48477 2.5 2.5 5.48477 2.5 9.16667C2.5 12.8486 5.48477 15.8333 9.16667 15.8333Z" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M17.5 17.5L13.875 13.875" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+        
+        <button class="sidebar-item @(SelectedTool == WorkflowTool.Hand ? "active" : "")" 
+                @onclick="() => SelectTool(WorkflowTool.Hand)" 
+                title="Home">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M2.5 7.5L10 1.25L17.5 7.5V16.25C17.5 16.9129 17.2366 17.5488 16.7678 18.0178C16.2988 18.4868 15.6629 18.75 15 18.75H5C4.33696 18.75 3.70107 18.4868 3.23223 18.0178C2.76339 17.5488 2.5 16.9129 2.5 16.25V7.5Z" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M7.5 18.75V10H12.5V18.75" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+
+        <button class="sidebar-item @(SelectedTool == WorkflowTool.Trigger ? "active" : "")" 
+                @onclick="() => SelectTool(WorkflowTool.Trigger)" 
+                title="Workflow">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M3.33333 10H8.33333L10 6.66667L11.6667 13.3333L13.3333 10H16.6667" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+        
+        <button class="sidebar-item @(SelectedTool == WorkflowTool.Action ? "active" : "")" 
+                @onclick="() => SelectTool(WorkflowTool.Action)" 
+                title="Grid View">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <rect x="3.33333" y="3.33333" width="5.83333" height="5.83333" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+                <rect x="10.8333" y="3.33333" width="5.83333" height="5.83333" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+                <rect x="3.33333" y="10.8333" width="5.83333" height="5.83333" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+                <rect x="10.8333" y="10.8333" width="5.83333" height="5.83333" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+        
+        <button class="sidebar-item @(SelectedTool == WorkflowTool.Condition ? "active" : "")" 
+                @onclick="() => SelectTool(WorkflowTool.Condition)" 
+                title="Share">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M15 6.66667C16.3807 6.66667 17.5 5.54738 17.5 4.16667C17.5 2.78595 16.3807 1.66667 15 1.66667C13.6193 1.66667 12.5 2.78595 12.5 4.16667C12.5 5.54738 13.6193 6.66667 15 6.66667Z" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M5 12.5C6.38071 12.5 7.5 11.3807 7.5 10C7.5 8.61929 6.38071 7.5 5 7.5C3.61929 7.5 2.5 8.61929 2.5 10C2.5 11.3807 3.61929 12.5 5 12.5Z" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M15 18.3333C16.3807 18.3333 17.5 17.214 17.5 15.8333C17.5 14.4526 16.3807 13.3333 15 13.3333C13.6193 13.3333 12.5 14.4526 12.5 15.8333C12.5 17.214 13.6193 18.3333 15 18.3333Z" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M7.15833 11.175L12.8417 14.6583" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M7.15833 8.82501L12.8417 5.34167" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+        
+        <button class="sidebar-item @(SelectedTool == WorkflowTool.Loop ? "active" : "")" 
+                @onclick="() => SelectTool(WorkflowTool.Loop)" 
+                title="History">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M2.5 10C2.5 14.1421 5.85786 17.5 10 17.5C14.1421 17.5 17.5 14.1421 17.5 10C17.5 5.85786 14.1421 2.5 10 2.5C7.04467 2.5 4.51894 4.24264 3.28125 6.875" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M2.5 5V8.75H6.25" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Bottom Section -->
+    <div class="sidebar-bottom">
+        <button class="sidebar-item" @onclick="OpenSettings" title="Settings">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M10 12.5C11.3807 12.5 12.5 11.3807 12.5 10C12.5 8.61929 11.3807 7.5 10 7.5C8.61929 7.5 7.5 8.61929 7.5 10C7.5 11.3807 8.61929 12.5 10 12.5Z" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M16.1667 12.5C16.0378 12.7917 16.0143 13.1167 16.1 13.4208C16.1857 13.725 16.3746 13.9917 16.6334 14.175L16.6917 14.2167C16.9001 14.3648 17.0748 14.5561 17.2051 14.7778C17.3354 14.9996 17.4182 15.2467 17.4487 15.5021C17.4792 15.7575 17.4566 16.0158 17.3826 16.2608C17.3087 16.5058 17.1851 16.7322 17.0201 16.9251C16.8551 17.1179 16.6525 17.2733 16.4251 17.3817C16.1977 17.4901 15.9509 17.5491 15.7 17.5551C15.4491 17.5611 15.1999 17.514 14.9684 17.4175C14.7369 17.321 14.5289 17.1775 14.3584 16.9958L14.3167 16.9375C14.1334 16.6787 13.8667 16.4898 13.5625 16.4041C13.2583 16.3184 12.9334 16.3419 12.6417 16.4708C12.3583 16.5914 12.1223 16.8026 11.9683 17.0708C11.8143 17.339 11.7501 17.6507 11.7834 17.9583V18.1C11.7834 18.6304 11.5727 19.1391 11.1976 19.5142C10.8224 19.8894 10.3138 20.1 9.78338 20.1C9.25296 20.1 8.74427 19.8894 8.36912 19.5142C7.99398 19.1391 7.78338 18.6304 7.78338 18.1V18.0167C7.74171 17.6917 7.66171 17.3917 7.36671 17.1583C7.07171 16.925 6.68838 16.8167 6.30005 16.8667C6.00838 16.7378 5.68338 16.7144 5.37921 16.8C5.07505 16.8857 4.80838 17.0746 4.62505 17.3334L4.58338 17.3917C4.40171 17.5734 4.19376 17.7169 3.96226 17.8134C3.73076 17.9099 3.48155 17.957 3.23062 17.951C2.97969 17.945 2.73288 17.886 2.50549 17.7776C2.2781 17.6692 2.07547 17.5138 1.91045 17.321C1.74543 17.1281 1.62187 16.9017 1.54793 16.6567C1.47399 16.4117 1.45136 16.1534 1.48187 15.898C1.51237 15.6426 1.59514 15.3956 1.72546 15.1738C1.85578 14.952 2.03049 14.7607 2.23838 14.6125L2.28005 14.5708C2.53884 14.3875 2.72775 14.1208 2.81345 13.8167C2.89915 13.5125 2.87565 13.1875 2.74671 12.8958C2.62615 12.6125 2.41495 12.3765 2.14671 12.2225C1.87847 12.0685 1.56671 12.0042 1.25838 12.0375H1.10005C0.569625 12.0375 0.0609451 11.8269 -0.314198 11.4518C-0.68934 11.0766 -0.900049 10.5679 -0.900049 10.0375C-0.900049 9.50709 -0.68934 8.99841 -0.314198 8.62326C0.0609451 8.24812 0.569625 8.03751 1.10005 8.03751H1.18338C1.50838 7.99584 1.80838 7.91584 2.04171 7.62084C2.27505 7.32584 2.38338 6.94251 2.33338 6.55418C2.46226 6.26251 2.48576 5.93751 2.40005 5.63335C2.31434 5.32918 2.12543 5.06251 1.86671 4.87918L1.80838 4.83751C1.60049 4.68944 1.42578 4.49812 1.29546 4.27634C1.16514 4.05456 1.08237 3.80746 1.05187 3.55207C1.02136 3.29668 1.04399 3.03842 1.11793 2.7934C1.19187 2.54837 1.31543 2.32197 1.48045 2.12918C1.64547 1.93639 1.8481 1.78096 2.07549 1.67256C2.30288 1.56416 2.54969 1.50519 2.80062 1.49923C3.05155 1.49327 3.30076 1.54039 3.53226 1.63694C3.76376 1.73349 3.97171 1.87698 4.15338 2.05876L4.19505 2.11709C4.37838 2.37588 4.64505 2.56479 4.94921 2.65049C5.25338 2.73619 5.57838 2.71269 5.87005 2.58376H5.95338C6.23671 2.46319 6.47282 2.25199 6.62682 1.98376C6.78082 1.71552 6.84505 1.40376 6.81171 1.09543V0.937498C6.81171 0.407076 7.02242 -0.101604 7.39756 -0.476747C7.77271 -0.851889 8.28139 -1.0626 8.81171 -1.0626C9.34213 -1.0626 9.85082 -0.851889 10.226 -0.476747C10.6011 -0.101604 10.8117 0.407076 10.8117 0.937498V1.02084C10.8451 1.32918 10.9091 1.64084 11.2041 1.87418C11.4991 2.10751 11.8825 2.21584 12.2709 2.16584C12.5625 2.29472 12.8875 2.31822 13.1917 2.23251C13.4959 2.14681 13.7625 1.9579 13.9459 1.69918L14.0042 1.64084C14.1859 1.45917 14.3938 1.31567 14.6253 1.21912C14.8568 1.12257 15.106 1.07546 15.357 1.08142C15.6079 1.08738 15.8547 1.14634 16.0821 1.25474C16.3095 1.36314 16.5121 1.51858 16.6772 1.71137C16.8422 1.90416 16.9657 2.13056 17.0397 2.37558C17.1136 2.6206 17.1362 2.87886 17.1057 3.13425C17.0752 3.38964 16.9925 3.63674 16.8621 3.85852C16.7318 4.0803 16.5571 4.27162 16.3492 4.42334L16.2909 4.48168C16.0321 4.66501 15.8431 4.93168 15.7574 5.23584C15.6717 5.54001 15.6952 5.86501 15.8242 6.15668V6.24001C15.9448 6.52334 16.156 6.75946 16.4242 6.91346C16.6925 7.06746 17.0042 7.13168 17.3125 7.09834H17.4709C18.0013 7.09834 18.51 7.30905 18.8851 7.68419C19.2603 8.05934 19.4709 8.56802 19.4709 9.09834C19.4709 9.62876 19.2603 10.1374 18.8851 10.5126C18.51 10.8877 18.0013 11.0984 17.4709 11.0984H17.3875C17.0792 11.1318 16.7875 11.2301 16.5542 11.5251C16.3209 11.8201 16.2125 12.2034 16.2625 12.5917V12.5C16.1336 12.7917 16.1101 13.1167 16.1959 13.4209L16.1667 12.5Z" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+        
+        <button class="sidebar-item" @onclick="ShowHelp" title="Help">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M7.57495 7.5C7.77087 6.94288 8.15758 6.47367 8.66657 6.17157C9.17556 5.86947 9.77504 5.75878 10.3559 5.86007C10.9367 5.96135 11.4613 6.26792 11.8446 6.72186C12.2279 7.1758 12.4453 7.74991 12.4583 8.34583C12.4583 10 9.95829 10.8333 9.95829 10.8333" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M10 14.1667H10.0083" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+        
+        <div class="sidebar-divider"></div>
+        
+        <div class="user-avatar">
+            <img src="data:image/svg+xml,%3Csvg width='28' height='28' viewBox='0 0 28 28' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='14' cy='14' r='14' fill='%23E5E7EB'/%3E%3Cpath d='M14 14C16.2091 14 18 12.2091 18 10C18 7.79086 16.2091 6 14 6C11.7909 6 10 7.79086 10 10C10 12.2091 11.7909 14 14 14Z' fill='%236B7280'/%3E%3Cpath d='M6 22C6 18.6863 9.13401 16 13 16H15C18.866 16 22 18.6863 22 22H6Z' fill='%236B7280'/%3E%3C/svg%3E" alt="User Avatar" />
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback<WorkflowTool> OnToolSelected { get; set; }
+    
+    private WorkflowTool SelectedTool { get; set; } = WorkflowTool.Trigger; // Default to workflow (3rd item)
+
+    private async Task SelectTool(WorkflowTool tool)
+    {
+        SelectedTool = tool;
+        await OnToolSelected.InvokeAsync(tool);
+    }
+
+    private void OpenSettings()
+    {
+        // Settings logic
+    }
+
+    private void ShowHelp()
+    {
+        // Help logic
+    }
+}
+
+<style>
+    .figma-sidebar {
+        width: 60px;
+        height: 100vh;
+        background-color: #f9f9fb;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 13px 10px 26px 10px;
+        border-right: 1px solid #e7e8ec;
+        position: relative;
+    }
+
+    .sidebar-top {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 14px 0 17px 0;
+        margin-bottom: 12px;
+    }
+
+    .project-avatar {
+        width: 28px;
+        height: 28px;
+        background-color: #14bdf0;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .project-avatar span {
+        font-family: 'Inter', sans-serif;
+        font-weight: 500;
+        font-size: 11px;
+        line-height: 14px;
+        color: #ffffff;
+        text-align: center;
+    }
+
+    .sidebar-menu {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        flex: 1;
+    }
+
+    .sidebar-item {
+        width: 36px;
+        height: 36px;
+        border: none;
+        background: transparent;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: #6b7280;
+        transition: all 0.2s ease;
+        padding: 8px 10px;
+        margin: 0;
+    }
+
+    .sidebar-item:hover {
+        background-color: #f3f4f6;
+    }
+
+    .sidebar-item.active {
+        background-color: #e7e8ec;
+        color: #374151;
+    }
+
+    .sidebar-item svg {
+        width: 20px;
+        height: 20px;
+        stroke-width: 1.67;
+    }
+
+    .sidebar-bottom {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        margin-top: auto;
+    }
+
+    .sidebar-divider {
+        width: 100%;
+        height: 1px;
+        background-color: #d8d9e0;
+        margin: 8px 0;
+    }
+
+    .user-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 14px;
+        overflow: hidden;
+    }
+
+    .user-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+</style> 

@@ -1,0 +1,39 @@
+@namespace WorkflowBuilder.Layout
+@inherits LayoutComponentBase
+
+<div class="workflow-layout">
+    <!-- Left Sidebar - Full Height -->
+    <WorkflowToolbar />
+    
+    <!-- Right Side Content -->
+    <div class="workflow-content">
+        <!-- Header positioned to start after sidebar -->
+        <WorkflowHeader />
+        
+        <!-- Main Canvas Area -->
+        <div class="workflow-canvas-container">
+            @Body
+        </div>
+    </div>
+</div>
+
+<style>
+    .workflow-layout {
+        height: 100vh;
+        display: flex;
+        background-color: #ffffff;
+    }
+
+    .workflow-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .workflow-canvas-container {
+        flex: 1;
+        overflow: hidden;
+        position: relative;
+    }
+</style> 

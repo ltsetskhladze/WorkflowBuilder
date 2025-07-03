@@ -1,0 +1,280 @@
+@namespace WorkflowBuilder.Layout
+
+<header class="figma-header">
+    <div class="header-left">
+        <button class="back-button" @onclick="NavigateBack" title="Back">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+        
+        <div class="header-title">
+            <h1>My New Workflow</h1>
+        </div>
+    </div>
+    
+    <div class="header-right">
+        <div class="header-actions">
+            <!-- Label Toggle Switch -->
+            <div class="label-switch">
+                <div class="label-text">
+                    <span>Label</span>
+                </div>
+                <div class="toggle-switch @(IsLabelVisible ? "active" : "")" @onclick="ToggleLabel">
+                    <div class="toggle-slider"></div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="icon-button" @onclick="UndoAction" title="Undo/History">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M2.5 10C2.5 14.1421 5.85786 17.5 10 17.5C14.1421 17.5 17.5 14.1421 17.5 10C17.5 5.85786 14.1421 2.5 10 2.5C7.04467 2.5 4.51894 4.24264 3.28125 6.875" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M2.5 5V8.75H6.25" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                
+                <button class="icon-button" @onclick="RedoAction" title="Redo">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M17.5 10C17.5 14.1421 14.1421 17.5 10 17.5C5.85786 17.5 2.5 14.1421 2.5 10C2.5 5.85786 5.85786 2.5 10 2.5C12.9553 2.5 15.4811 4.24264 16.7188 6.875" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M17.5 5V8.75H13.75" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                
+                <button class="icon-button settings-active" @onclick="OpenSettings" title="Settings">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M10 12.5C11.3807 12.5 12.5 11.3807 12.5 10C12.5 8.61929 11.3807 7.5 10 7.5C8.61929 7.5 7.5 8.61929 7.5 10C7.5 11.3807 8.61929 12.5 10 12.5Z" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M16.1667 12.5C16.0595 12.7916 16.0369 13.1083 16.1019 13.4147C16.1669 13.7211 16.3165 14.0034 16.5334 14.225L16.5917 14.2833C16.7673 14.4589 16.9055 14.6693 16.9982 14.9021C17.0909 15.1348 17.1363 15.3852 17.1319 15.6372C17.1274 15.8893 17.0732 16.1376 16.9727 16.3666C16.8722 16.5956 16.7274 16.8006 16.5467 16.9689C16.366 17.1372 16.1535 17.2653 15.9208 17.3451C15.6881 17.4249 15.4407 17.4546 15.1949 17.4324C14.9491 17.4102 14.7107 17.3365 14.4951 17.2161C14.2794 17.0958 14.0915 16.9314 13.9434 16.7333L13.8851 16.675C13.6635 16.4581 13.3812 16.3085 13.0748 16.2435C12.7684 16.1785 12.4517 16.2011 12.1601 16.3083C11.8767 16.4073 11.6297 16.5827 11.4467 16.8142C11.2638 17.0458 11.1518 17.3243 11.1226 17.6167V17.775C11.1226 18.3025 10.9132 18.8084 10.5405 19.1811C10.1679 19.5537 9.66198 19.7631 9.13451 19.7631C8.60703 19.7631 8.10114 19.5537 7.7285 19.1811C7.35586 18.8084 7.14643 18.3025 7.14643 17.775V17.6917C7.10929 17.3838 6.98434 17.0934 6.78651 16.8567C6.58868 16.62 6.32648 16.4475 6.03351 16.3583C5.74185 16.2511 5.42515 16.2285 5.11878 16.2935C4.81241 16.3585 4.53007 16.5081 4.30851 16.725L4.25017 16.7833C4.05207 16.9314 3.86417 17.0958 3.64852 17.2161C3.43288 17.3365 3.19447 17.4102 2.94866 17.4324C2.70286 17.4546 2.45549 17.4249 2.22279 17.3451C1.9901 17.2653 1.77763 17.1372 1.59691 16.9689C1.41619 16.8006 1.27145 16.5956 1.17094 16.3666C1.07043 16.1376 1.01622 15.8893 1.01179 15.6372C1.00736 15.3852 1.05276 15.1348 1.14544 14.9021C1.23812 14.6693 1.37634 14.4589 1.55184 14.2833L1.61017 14.225C1.82708 14.0034 1.97668 13.7211 2.04168 13.4147C2.10668 13.1083 2.08402 12.7916 1.97684 12.5C1.87789 12.2166 1.7025 11.9696 1.47098 11.7866C1.23947 11.6037 0.960918 11.4917 0.668509 11.4625H0.509175C-0.0182973 11.4625 -0.524192 11.2531 -0.896829 10.8804C-1.26947 10.5078 -1.4789 10.0019 -1.4789 9.47444C-1.4789 8.94697 -1.26947 8.44108 -0.896829 8.06844C-0.524192 7.6958 -0.0182973 7.48637 0.509175 7.48637H0.592508C0.900449 7.44923 1.19087 7.32428 1.42756 7.12645C1.66424 6.92862 1.83671 6.66642 1.92601 6.37345C2.03319 6.08179 2.05585 5.76509 1.99085 5.45872C1.92585 5.15235 1.77625 4.87001 1.55934 4.64845L1.50101 4.59011C1.32551 4.41461 1.18729 4.20423 1.09461 3.97146C1.00193 3.73869 0.956534 3.48832 0.960965 3.23625C0.965396 2.98417 1.01961 2.73587 1.12012 2.50686C1.22063 2.27784 1.36537 2.07285 1.54609 1.90448C1.72681 1.73611 1.93928 1.60801 2.17198 1.52821C2.40467 1.44841 2.65204 1.41871 2.89784 1.44093C3.14365 1.46314 3.38206 1.53683 3.59768 1.65719C3.8133 1.77754 4.00121 1.94198 4.15017 2.14011L4.20851 2.19845C4.42507 2.41536 4.70741 2.56495 5.01378 2.62995C5.32015 2.69495 5.63685 2.67229 5.92851 2.56511H6.01851C6.30191 2.46616 6.54889 2.29077 6.73184 2.05926C6.91479 1.82774 7.02686 1.54919 7.05601 1.25678V1.09745C7.05601 0.569974 7.26544 0.0640792 7.63807 -0.308557C8.01071 -0.681194 8.51661 -0.890624 9.04408 -0.890624C9.57155 -0.890624 10.0774 -0.681194 10.4501 -0.308557C10.8227 0.0640792 11.0322 0.569974 11.0322 1.09745V1.18078C11.0613 1.47319 11.1734 1.75174 11.3563 1.98326C11.5393 2.21477 11.7863 2.39016 12.0697 2.48911C12.3613 2.59629 12.678 2.61895 12.9844 2.55395C13.2908 2.48895 13.5731 2.33936 13.7897 2.12245L13.8481 2.06411C13.997 1.86598 14.1849 1.70154 14.4005 1.58119C14.6162 1.46083 14.8546 1.38714 15.1004 1.36493C15.3462 1.34271 15.5935 1.37241 15.8262 1.45221C16.0589 1.53201 16.2714 1.66011 16.4521 1.82848C16.6328 1.99685 16.7776 2.20184 16.8781 2.43086C16.9786 2.65987 17.0328 2.90817 17.0372 3.16025C17.0416 3.41232 16.9962 3.66269 16.9035 3.89546C16.8108 4.12823 16.6726 4.33861 16.4971 4.51411L16.4388 4.57245C16.2219 4.78936 16.0723 5.0717 16.0073 5.37807C15.9423 5.68444 15.9649 6.00114 16.0721 6.29278V6.38278C16.171 6.66618 16.3464 6.91316 16.578 7.09611C16.8095 7.27906 17.088 7.39113 17.3804 7.42028H17.5397C18.0672 7.42028 18.5731 7.62971 18.9458 8.00235C19.3184 8.37499 19.5278 8.88088 19.5278 9.40836C19.5278 9.93583 19.3184 10.4417 18.9458 10.8144C18.5731 11.187 18.0672 11.3964 17.5397 11.3964H17.4564C17.164 11.4256 16.8854 11.5376 16.6539 11.7206C16.4224 11.9035 16.247 12.1505 16.148 12.4339V12.5Z" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                
+                <button class="icon-button" @onclick="DownloadWorkflow" title="Export">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M17.5 12.5V15.8333C17.5 16.2754 17.3244 16.6993 17.0118 17.0118C16.6993 17.3244 16.2754 17.5 15.8333 17.5H4.16667C3.72464 17.5 3.30072 17.3244 2.98816 17.0118C2.67559 16.6993 2.5 16.2754 2.5 15.8333V12.5" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M5.83333 8.33334L10 12.5L14.1667 8.33334" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M10 12.5V2.5" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                
+                <button class="icon-button" @onclick="RunWorkflow" title="Run Workflow">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M6.66669 3.33334V16.6667L16.6667 10L6.66669 3.33334Z" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                
+                <button class="save-button" @onclick="SaveWorkflow">
+                    Save
+                </button>
+            </div>
+        </div>
+    </div>
+</header>
+
+@code {
+    [Parameter] public string WorkflowName { get; set; } = "My New Workflow";
+    
+    private bool IsLabelVisible { get; set; } = true;
+
+    private void NavigateBack()
+    {
+        // Navigation logic
+    }
+
+    private void ToggleLabel()
+    {
+        IsLabelVisible = !IsLabelVisible;
+    }
+
+    private void UndoAction()
+    {
+        // Undo logic
+    }
+
+    private void RedoAction()
+    {
+        // Redo logic
+    }
+
+    private void OpenSettings()
+    {
+        // Settings logic
+    }
+
+    private void DownloadWorkflow()
+    {
+        // Download logic
+    }
+
+    private void RunWorkflow()
+    {
+        // Run workflow logic
+    }
+
+    private void SaveWorkflow()
+    {
+        // Save logic
+    }
+}
+
+<style>
+    .figma-header {
+        height: 64px;
+        background-color: #ffffff;
+        border-bottom: 1px solid #e0e1e6;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 24px 12px 24px;
+        position: relative;
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+    }
+
+    .back-button {
+        width: 32px;
+        height: 32px;
+        border: none;
+        background: transparent;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: #80828d;
+        transition: all 0.2s ease;
+    }
+
+    .back-button:hover {
+        background-color: #f8f9fa;
+        color: #1e1f24;
+    }
+
+    .header-title h1 {
+        font-family: 'Inter', sans-serif;
+        font-weight: 500;
+        font-size: 18px;
+        line-height: normal;
+        color: #1e1f24;
+        margin: 0;
+        text-align: center;
+    }
+
+    .header-right {
+        display: flex;
+        align-items: center;
+    }
+
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .label-switch {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .label-text span {
+        font-family: 'Inter', sans-serif;
+        font-weight: 600;
+        font-size: 13px;
+        line-height: 20px;
+        color: #1e1f24;
+    }
+
+    .toggle-switch {
+        width: 34px;
+        height: 20px;
+        background-color: #e0e1e6;
+        border-radius: 10px;
+        position: relative;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+    .toggle-switch.active {
+        background-color: #007bff;
+    }
+
+    .toggle-slider {
+        width: 16px;
+        height: 16px;
+        background-color: #ffffff;
+        border-radius: 50%;
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        transition: transform 0.2s ease;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+
+    .toggle-switch.active .toggle-slider {
+        transform: translateX(14px);
+    }
+
+    .action-buttons {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .icon-button {
+        width: 32px;
+        height: 32px;
+        border: 1px solid #e0e1e6;
+        background-color: #fcfcfd;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: #80828d;
+        transition: all 0.2s ease;
+        padding: 8px;
+    }
+
+    .icon-button:hover {
+        background-color: #f8f9fa;
+        color: #1e1f24;
+    }
+
+    .icon-button.settings-active {
+        background-color: #eff0f3;
+        color: #1e1f24;
+    }
+
+    .icon-button svg {
+        width: 20px;
+        height: 20px;
+        stroke-width: 1.67;
+    }
+
+    .save-button {
+        background-color: #1e1f24;
+        color: #ffffff;
+        border: none;
+        border-radius: 6px;
+        padding: 6px 12px;
+        height: 32px;
+        font-family: 'Inter', sans-serif;
+        font-weight: 500;
+        font-size: 13px;
+        line-height: 20px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .save-button:hover {
+        background-color: #333333;
+    }
+</style> 
