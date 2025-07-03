@@ -1,5 +1,7 @@
 @using WorkflowBuilder.Models
 @namespace WorkflowBuilder.Layout
+@inject IJSRuntime JSRuntime
+@inject global::WorkflowBuilder.Services.WorkflowEventService EventService
 
 <div class="figma-sidebar">
     <!-- Top Section with Project Avatar -->
@@ -7,6 +9,14 @@
         <div class="project-avatar">
             <span>MW</span>
         </div>
+        
+        <!-- Load Sample Button -->
+        <button class="load-sample-btn" @onclick="LoadSample" title="Load Sample Workflow">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+                <path d="M3.33333 13.3333L10 6.66667L16.6667 13.3333" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M10 6.66667V17.5" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
     </div>
 
     <!-- Main Navigation Icons -->
@@ -36,6 +46,72 @@
                 <path d="M3.33333 10H8.33333L10 6.66667L11.6667 13.3333L13.3333 10H16.6667" stroke="currentColor" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
         </button>
+
+        <!-- Workflow Node Tools Section -->
+        <div class="sidebar-section-divider"></div>
+
+        <!-- Draggable Start Node -->
+        <div class="draggable-tool" 
+             draggable="true"
+             @ondragstart="(e) => OnDragStart(e, WorkflowNodeType.Start)"
+             title="Start Node - Drag to canvas">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M10.83 2.5L3.33 11.67h6.25v5.83l7.5-9.17h-6.25V2.5z" fill="#7c3aed" stroke="#7c3aed" stroke-width="1.5" stroke-linejoin="round"/>
+            </svg>
+        </div>
+
+        <!-- Draggable If Condition Node -->
+        <div class="draggable-tool"
+             draggable="true"
+             @ondragstart="(e) => OnDragStart(e, WorkflowNodeType.IfCondition)"
+             title="If Condition Node - Drag to canvas">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M5.83 6.67l4.17 6.66 4.17-6.66M5.83 6.67h8.34M5.83 6.67V5a1.67 1.67 0 011.67-1.67h5a1.67 1.67 0 011.67 1.67v1.67" stroke="#0ea5e9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+
+        <!-- Draggable Switch Node -->
+        <div class="draggable-tool"
+             draggable="true"
+             @ondragstart="(e) => OnDragStart(e, WorkflowNodeType.Switch)"
+             title="Switch Node - Drag to canvas">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M10 2.5v5m0 5v5m-5-7.5h10M5 12.5h10" stroke="#0ea5e9" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+        </div>
+
+        <!-- Draggable For Each Node -->
+        <div class="draggable-tool"
+             draggable="true"
+             @ondragstart="(e) => OnDragStart(e, WorkflowNodeType.ForEach)"
+             title="For Each Loop - Drag to canvas">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M6.67 10a3.33 3.33 0 106.66 0 3.33 3.33 0 00-6.66 0z" fill="none" stroke="#0ea5e9" stroke-width="1.5"/>
+                <path d="m12.5 7.5 2.5 2.5-2.5 2.5" stroke="#0ea5e9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+
+        <!-- Draggable Scope Node -->
+        <div class="draggable-tool"
+             draggable="true"
+             @ondragstart="(e) => OnDragStart(e, WorkflowNodeType.Scope)"
+             title="Scope Node - Drag to canvas">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <rect x="2.5" y="2.5" width="15" height="15" rx="1.67" ry="1.67" stroke="#0ea5e9" stroke-width="1.5" fill="none"/>
+                <path d="M7.5 7.5h5v5h-5z" stroke="#0ea5e9" stroke-width="1.25" fill="none"/>
+            </svg>
+        </div>
+
+        <!-- Draggable End Node -->
+        <div class="draggable-tool"
+             draggable="true"
+             @ondragstart="(e) => OnDragStart(e, WorkflowNodeType.End)"
+             title="End Node - Drag to canvas">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <circle cx="10" cy="10" r="7.5" fill="#ef4444" stroke="#dc2626" stroke-width="1.5"/>
+                <path d="M12.5 7.5L7.5 12.5M7.5 7.5l5 5" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+        </div>
         
         <button class="sidebar-item @(SelectedTool == WorkflowTool.Action ? "active" : "")" 
                 @onclick="() => SelectTool(WorkflowTool.Action)" 
@@ -104,6 +180,25 @@
     {
         SelectedTool = tool;
         await OnToolSelected.InvokeAsync(tool);
+    }
+
+        private async Task OnDragStart(DragEventArgs e, WorkflowNodeType nodeType)
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("eval", $"window.dragNodeType = '{nodeType}';");
+        }
+        catch (Exception ex)
+        {
+            // Silent error handling
+        }
+    }
+
+
+
+    private void LoadSample()
+    {
+        EventService.RequestLoadSample();
     }
 
     private void OpenSettings()
@@ -195,6 +290,53 @@
         stroke-width: 1.67;
     }
 
+    .sidebar-section-divider {
+        width: 100%;
+        height: 1px;
+        background-color: #d8d9e0;
+        margin: 8px 0;
+    }
+
+    .draggable-tool {
+        width: 36px;
+        height: 36px;
+        border: none;
+        background: transparent;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: grab;
+        transition: all 0.2s ease;
+        padding: 8px 10px;
+        margin: 0;
+        position: relative;
+    }
+
+    .draggable-tool:hover {
+        background-color: #f3f4f6;
+        transform: scale(1.05);
+    }
+
+    .draggable-tool:active {
+        cursor: grabbing;
+        transform: scale(0.95);
+    }
+
+    .draggable-tool svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .draggable-tool.link-tool:hover {
+        background-color: #fef3c7;
+        border: 1px solid #f59e0b;
+    }
+
+    .draggable-tool.link-tool:active {
+        background-color: #fcd34d;
+    }
+
     .sidebar-bottom {
         display: flex;
         flex-direction: column;
@@ -221,5 +363,31 @@
         width: 100%;
         height: 100%;
         object-fit: cover;
+    }
+
+    .load-sample-btn {
+        width: 32px;
+        height: 32px;
+        border: 1px solid #e5e7eb;
+        background: #ffffff;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: #6b7280;
+        transition: all 0.2s ease;
+        margin-top: 12px;
+    }
+
+    .load-sample-btn:hover {
+        background-color: #f3f4f6;
+        border-color: #d1d5db;
+        color: #374151;
+    }
+
+    .load-sample-btn svg {
+        width: 16px;
+        height: 16px;
     }
 </style> 

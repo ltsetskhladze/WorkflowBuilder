@@ -2,136 +2,679 @@
 @page "/workflow-builder"
 @using global::WorkflowBuilder.Layout
 @using global::WorkflowBuilder.Models
+@using global::WorkflowBuilder.Components
+@using Blazor.Diagrams.Core.Models.Base
+@using Blazor.Diagrams.Core.Models
+@using Blazor.Diagrams
+@using Blazor.Diagrams.Core.Options
+@using Blazor.Diagrams.Core.PathGenerators
+@using Blazor.Diagrams.Core.Routers
+@using Blazor.Diagrams.Options
 @layout WorkflowLayout
+@inject IJSRuntime JSRuntime
+@inject global::WorkflowBuilder.Services.WorkflowService WorkflowService
+@inject global::WorkflowBuilder.Services.WorkflowEventService EventService
+@implements IDisposable
 
 <PageTitle>Workflow Builder</PageTitle>
 
-<div class="workflow-canvas">
-    <div class="canvas-grid" @oncontextmenu="OnCanvasRightClick" @oncontextmenu:preventDefault="true">
-        <!-- Canvas content will be rendered here -->
-        <div class="canvas-placeholder">
-            <div class="placeholder-content">
-                <i class="bi bi-diagram-3" style="font-size: 48px; color: #dee2e6;"></i>
-                <h3>Start Building Your Workflow</h3>
-                <p>Select a tool from the sidebar to begin adding workflow components</p>
-                <div class="quick-actions">
-                    <button class="btn btn-outline-primary" @onclick="AddTriggerNode">
-                        <i class="bi bi-lightning-fill"></i> Add Trigger
-                    </button>
-                    <button class="btn btn-outline-secondary" @onclick="AddActionNode">
-                        <i class="bi bi-gear-fill"></i> Add Action
-                    </button>
+<div class="workflow-container">
+    <!-- Main Canvas -->
+    <div class="canvas-wrapper"
+         @ondrop="OnCanvasDrop"
+         @ondragover="OnCanvasDragOver"
+         @ondragover:preventDefault="true"
+         @onclick="OnCanvasClick"
+         @onkeydown="OnCanvasKeyDown"
+         tabindex="0">
+
+        <CascadingValue Value="Diagram">
+            <div class="workflow-diagram">
+                <DiagramCanvas />
+            </div>
+        </CascadingValue>
+        <!-- Drop Zone Indicator -->
+        @if (IsDragOver)
+        {
+            <div class="drop-zone-indicator">
+                <div class="drop-zone-content">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                        <path d="m2 17 10 5 10-5" />
+                        <path d="m2 12 10 5 10-5" />
+                    </svg>
+                    <p>Drop here to add @DraggedNodeType node</p>
                 </div>
             </div>
-        </div>
+        }
+
+        <!-- Instructions Overlay -->
+        @if (Diagram.Nodes.Count == 0)
+        {
+            <div class="instructions-overlay">
+                <div class="instructions-content">
+                    <h3>🚀 Workflow Builder</h3>
+                    <ul>
+                        <li><strong>Drag & Drop:</strong> Drag nodes from toolbar to canvas</li>
+                        <li><strong>Connect:</strong> Drag from blue port to blue port</li>
+                        <li><strong>Edit:</strong> Click node to open properties drawer</li>
+                        <li><strong>Delete:</strong> Select item → Press Delete/Backspace</li>
+                    </ul>
+                </div>
+            </div>
+        }
     </div>
+
+    <!-- Properties Drawer -->
+    <NodePropertiesDrawer IsOpen="IsDrawerOpen"
+                          SelectedNode="SelectedNode"
+                          OnClose="CloseDrawer" />
 </div>
 
 @code {
-    private WorkflowTool SelectedTool { get; set; } = WorkflowTool.Select;
+    // EXACT pattern from working samples - simple initialization  
+    protected readonly BlazorDiagram Diagram = new BlazorDiagram();
+    private List<WorkflowNode> WorkflowNodes { get; set; } = new();
+    private WorkflowNode? SelectedNode { get; set; }
+    private bool IsDrawerOpen { get; set; } = false;
+    private bool IsDragOver { get; set; } = false;
+    private string DraggedNodeType { get; set; } = "";
+
 
     protected override void OnInitialized()
     {
-        // Initialize workflow canvas
+        base.OnInitialized();
+
+        // Register custom component for WorkflowNode - handles its own events
+        Diagram.RegisterComponent<WorkflowNode, global::WorkflowBuilder.Components.WorkflowNodeComponent>();
+
+        // Setup keyboard shortcuts for delete functionality
+        var keyboardBehavior = Diagram.GetBehavior<KeyboardShortcutsBehavior>();
+        keyboardBehavior?.SetShortcut("Delete", false, false, false, (diagram) => { DeleteSelectedItems(); return ValueTask.CompletedTask; });
+        keyboardBehavior?.SetShortcut("Backspace", false, false, false, (diagram) => { DeleteSelectedItems(); return ValueTask.CompletedTask; });
+
+        // Subscribe to events
+        Diagram.SelectionChanged += OnSelectionChanged;
+        Diagram.Nodes.Added += OnNodeAdded;
+        Diagram.Nodes.Removed += OnNodeRemoved;
+        Diagram.Links.Added += OnLinkCreated;
+        Diagram.Links.Removed += OnLinkRemoved;
+
+        // Subscribe to load sample event  
+        EventService.LoadSampleRequested += OnLoadSampleRequested;
     }
 
-    private void OnCanvasRightClick(MouseEventArgs e)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // Handle right-click context menu
+        if (firstRender)
+        {
+            // Start with test nodes for debugging ports
+            AddBasicTestNodes();
+            
+            try 
+            {
+                // Load sample workflow after test nodes
+                await Task.Delay(1000); // Give time to see test nodes first
+                await LoadSampleWorkflow();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to load sample workflow: {ex.Message}");
+            }
+        }
     }
 
-    private void AddTriggerNode()
+    private void AddBasicTestNodes()
     {
-        // Add trigger node logic
+        try
+        {
+            // *** MINIMAL TEST - BASIC NodeModel instances AND WorkflowNode for comparison ***
+            var node1 = NewNode(50, 50);
+            var node2 = NewNode(300, 300);
+            var node3 = NewNode(500, 100);
+            
+            // Test WorkflowNode alongside basic nodes
+            var workflowTestNode = new WorkflowNode(WorkflowNodeType.Start, new Point(150, 200))
+            {
+                Title = "Test WorkflowNode",
+                Description = "Testing ports"
+            };
+            
+            Diagram.Nodes.Add(node1);
+            Diagram.Nodes.Add(node2);
+            Diagram.Nodes.Add(node3);
+            Diagram.Nodes.Add(workflowTestNode);
+
+            Console.WriteLine($"Basic node1 ports: {node1.Ports.Count}");
+            Console.WriteLine($"WorkflowNode ports: {workflowTestNode.Ports.Count}");
+
+            // Create a link to test if ports work
+            Diagram.Links.Add(new LinkModel(node1.GetPort(PortAlignment.Right), node2.GetPort(PortAlignment.Left)));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"AddBasicTestNodes error: {ex.Message}");
+        }
+    }
+    
+    // EXACT method from working Customization.razor samples
+    private NodeModel NewNode(double x, double y)
+    {
+        var node = new NodeModel(new Point(x, y));
+        node.AddPort(PortAlignment.Bottom);
+        node.AddPort(PortAlignment.Top);
+        node.AddPort(PortAlignment.Left);
+        node.AddPort(PortAlignment.Right);
+        return node;
     }
 
-    private void AddActionNode()
+    private void OnSelectionChanged(SelectableModel model)
     {
-        // Add action node logic
-    }
+        var selectedWorkflowNode = Diagram.GetSelectedModels().OfType<WorkflowNode>().FirstOrDefault();
+        var selectedLink = Diagram.GetSelectedModels().OfType<LinkModel>().FirstOrDefault();
 
-    private void OnToolSelected(WorkflowTool tool)
-    {
-        SelectedTool = tool;
+        // Clear previous selections
+        foreach (var node in WorkflowNodes)
+        {
+            node.IsSelected = false;
+        }
+
+        if (selectedWorkflowNode != null)
+        {
+            // WorkflowNode selected - open drawer
+            selectedWorkflowNode.IsSelected = true;
+            SelectedNode = selectedWorkflowNode;
+            IsDrawerOpen = true;
+            Console.WriteLine($"Selected workflow node: {selectedWorkflowNode.Title}");
+        }
+        else if (selectedLink != null)
+        {
+            // Link selected - close drawer
+            SelectedNode = null;
+            IsDrawerOpen = false;
+            Console.WriteLine("Link selected - drawer closed");
+        }
+        else
+        {
+            // Nothing selected - close drawer
+            SelectedNode = null;
+            IsDrawerOpen = false;
+        }
+
         StateHasChanged();
     }
+
+    private void OnNodeAdded(NodeModel node)
+    {
+        if (node is WorkflowNode workflowNode)
+        {
+            WorkflowNodes.Add(workflowNode);
+        }
+        StateHasChanged();
+    }
+
+    private void OnNodeRemoved(NodeModel node)
+    {
+        if (node is WorkflowNode workflowNode)
+        {
+            WorkflowNodes.Remove(workflowNode);
+            if (SelectedNode == workflowNode)
+            {
+                SelectedNode = null;
+                IsDrawerOpen = false;
+            }
+            StateHasChanged();
+        }
+    }
+
+    private void OnLinkCreated(BaseLinkModel link)
+    {
+        StateHasChanged();
+    }
+
+    private void OnLinkRemoved(BaseLinkModel link)
+    {
+        StateHasChanged();
+    }
+
+    // Drag and Drop from Toolbar
+    private async Task OnCanvasDragOver(DragEventArgs e)
+    {
+        // Always allow drop and show indicator
+        IsDragOver = true;
+        StateHasChanged();
+    }
+
+    private async Task OnCanvasDrop(DragEventArgs e)
+    {
+        IsDragOver = false;
+
+        try
+        {
+            var nodeTypeString = await JSRuntime.InvokeAsync<string>("eval", "window.dragNodeType || ''");
+
+            if (!string.IsNullOrEmpty(nodeTypeString) && nodeTypeString != "LINK_TOOL" && Enum.TryParse<WorkflowNodeType>(nodeTypeString, out var nodeType))
+            {
+                var diagramPoint = Diagram.GetRelativeMousePoint(e.ClientX, e.ClientY);
+
+                // Create WorkflowNode with proper setup
+                var newNode = new WorkflowNode(nodeType, diagramPoint)
+                {
+                    Title = GetDefaultTitle(nodeType),
+                    Description = $"New {nodeType} node"
+                };
+
+                Console.WriteLine($"Dropped new {nodeType} node with {newNode.Ports.Count} ports");
+
+                // Add to diagram
+                Diagram.Nodes.Add(newNode);
+                
+                // Clear drag state and refresh
+                await JSRuntime.InvokeVoidAsync("eval", "window.dragNodeType = null;");
+                Diagram.Refresh();
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Drop error: {ex.Message}");
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task OnCanvasClick(MouseEventArgs e)
+    {
+        // Don't unselect anything - let user maintain focus on selected items
+        // Only close drawer if specifically clicking the close button
+        StateHasChanged();
+    }
+
+
+
+         private async Task OnCanvasKeyDown(KeyboardEventArgs e)
+     {
+         // Escape key can be used for other purposes if needed
+         // Delete is now handled by keyboard shortcuts behavior
+     }
+
+     private void DeleteSelectedItems()
+     {
+         // *** MINIMAL TEST - Simple delete ***
+         var deleted = false;
+         
+         // Delete selected diagram models (both nodes and links)
+         var selectedModels = Diagram.GetSelectedModels().ToList();
+         foreach (var model in selectedModels)
+         {
+             if (model is LinkModel link)
+             {
+                 Diagram.Links.Remove(link);
+                 deleted = true;
+                 Console.WriteLine("Deleted link");
+             }
+             else if (model is NodeModel node)
+             {
+                 Diagram.Nodes.Remove(node);
+                 deleted = true;
+                 Console.WriteLine($"Deleted node at: {node.Position}");
+             }
+         }
+         
+         if (deleted)
+         {
+             StateHasChanged();
+         }
+     }
+
+    private string GetDefaultTitle(WorkflowNodeType nodeType)
+    {
+        return nodeType switch
+        {
+            WorkflowNodeType.Start => "Start",
+            WorkflowNodeType.IfCondition => "If Condition",
+            WorkflowNodeType.Switch => "Switch",
+            WorkflowNodeType.ForEach => "For Each",
+            WorkflowNodeType.Scope => "Scope",
+            WorkflowNodeType.End => "End",
+            WorkflowNodeType.Basic => "Action",
+            _ => "Node"
+        };
+    }
+
+    // Node event handlers are now handled directly in the WorkflowNodeComponent
+
+    private void CloseDrawer()
+    {
+        IsDrawerOpen = false;
+        if (SelectedNode != null)
+        {
+            SelectedNode.IsSelected = false;
+            SelectedNode = null;
+        }
+        Diagram.UnselectAll();
+        StateHasChanged();
+    }
+
+    private async Task LoadSampleWorkflow()
+    {
+        try
+        {
+            var workflowData = await WorkflowService.LoadWorkflowFromJson("sample-workflow.json");
+            if (workflowData != null)
+                          {
+                  Console.WriteLine($"Loaded workflow with {workflowData.WorkflowActivities.Count} activities");
+                  
+                  // Successfully loaded and parsed workflow data
+                  
+                  Diagram.Nodes.Clear();
+                WorkflowNodes.Clear();
+
+                var nodes = WorkflowService.ConvertToWorkflowNodes(workflowData);
+                Console.WriteLine($"Loading {nodes.Count} workflow nodes");
+                
+                foreach (var node in nodes)
+                {
+                    Diagram.Nodes.Add(node);
+                }
+
+                var links = WorkflowService.CreateLinks(nodes, workflowData.WorkflowActivities);
+                Console.WriteLine($"Creating {links.Count} workflow links");
+                
+                foreach (var (from, to, linkType) in links)
+                {
+                    var fromPort = GetAppropriatePort(from, linkType, true);
+                    var toPort = GetAppropriatePort(to, linkType, false);
+
+                    if (fromPort != null && toPort != null)
+                    {
+                        var link = new LinkModel(fromPort, toPort);
+                        
+                        // Add labels based on jump type
+                        AddLinkLabel(link, linkType, from.NodeType);
+                        
+                        Diagram.Links.Add(link);
+                    }
+                }
+
+                StateHasChanged();
+            }
+            else
+            {
+                Console.WriteLine("Failed to load workflow data");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"LoadSampleWorkflow error: {ex.Message}");
+        }
+    }
+
+        private PortModel? GetAppropriatePort(WorkflowNode node, string jumpType, bool isSource)
+    {
+        // For source nodes
+        if (isSource)
+        {
+            // All source nodes use Right port for output
+            return node.GetPort(PortAlignment.Right);
+        }
+        
+        // For target nodes
+        return node.GetPort(PortAlignment.Left);
+    }
+
+    private PortModel? GetForEachPort(WorkflowNode node, string? linkType, bool isSource)
+    {
+        if (isSource)
+        {
+            return node.GetPort(PortAlignment.Right); // Output port
+        }
+        else
+        {
+            return node.GetPort(PortAlignment.Left); // Input port
+        }
+    }
+
+    private PortModel? GetIfConditionPort(WorkflowNode node, string? linkType, bool isSource)
+    {
+        if (isSource)
+        {
+            return node.GetPort(PortAlignment.Right); // Output port
+        }
+        else
+        {
+            return node.GetPort(PortAlignment.Left); // Input port
+        }
+    }
+
+    private PortModel? GetSwitchPort(WorkflowNode node, string? linkType, bool isSource)
+    {
+        if (isSource)
+        {
+            return node.GetPort(PortAlignment.Right); // Output port
+        }
+        else
+        {
+            return node.GetPort(PortAlignment.Left); // Input port
+        }
+    }
+
+    private void AddLinkLabel(LinkModel link, string jumpType, WorkflowNodeType sourceNodeType)
+    {
+        // Add appropriate labels based on source node type and jump type
+        string labelText = jumpType switch
+        {
+            "True" => "True",
+            "False" => "False",
+            "Loop" => "Loop",
+            "Done" => "Done",
+            "Continue" => "Continue",
+            _ => "" // No label for Default and other types
+        };
+
+        if (!string.IsNullOrEmpty(labelText))
+        {
+            // Add label at the middle of the link (0.5)
+            var label = new LinkLabelModel(link, labelText, 0.5);
+            link.Labels.Add(label);
+        }
+    }
+
+    private async void OnLoadSampleRequested(object? sender, EventArgs e)
+    {
+        await LoadSampleWorkflow();
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        // Unsubscribe from diagram events
+        Diagram.SelectionChanged -= OnSelectionChanged;
+        Diagram.Nodes.Added -= OnNodeAdded;
+        Diagram.Nodes.Removed -= OnNodeRemoved;
+        Diagram.Links.Added -= OnLinkCreated;
+        Diagram.Links.Removed -= OnLinkRemoved;
+
+        // Unsubscribe from service events
+        EventService.LoadSampleRequested -= OnLoadSampleRequested;
+    }
+
+     
 }
 
 <style>
-    .workflow-canvas {
+    .workflow-container {
         width: 100%;
         height: 100%;
         position: relative;
-        overflow: auto;
-        background-color: #ffffff;
+        overflow: hidden;
     }
 
-    .canvas-grid {
+    .canvas-wrapper {
         width: 100%;
         height: 100%;
-        background-image: 
-            radial-gradient(circle, #e9ecef 1px, transparent 1px);
+        position: relative;
+        background: #ffffff;
+        overflow: hidden;
+        outline: none; /* Remove focus outline */
+    }
+
+    .canvas-wrapper:focus {
+        outline: 2px solid rgba(59, 130, 246, 0.2);
+        outline-offset: -2px;
+    }
+
+
+
+    .workflow-diagram {
+        width: 100%;
+        height: 100vh;
+        background-image: radial-gradient(circle, #e9ecef 1px, transparent 1px);
         background-size: 20px 20px;
         background-position: 0 0;
-        position: relative;
-        min-height: 100vh;
     }
 
-    .canvas-placeholder {
+    .drop-zone-indicator {
         position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        text-align: center;
-        color: #6c757d;
-    }
-
-    .placeholder-content h3 {
-        margin: 16px 0 8px 0;
-        font-weight: 600;
-        color: #495057;
-    }
-
-    .placeholder-content p {
-        margin: 0 0 24px 0;
-        font-size: 14px;
-    }
-
-    .quick-actions {
-        display: flex;
-        gap: 12px;
-        justify-content: center;
-    }
-
-    .quick-actions .btn {
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(59, 130, 246, 0.1);
+        border: 2px dashed #3b82f6;
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 8px 16px;
-        border-radius: 6px;
+        justify-content: center;
+        z-index: 1000;
+        pointer-events: none;
+    }
+
+    .drop-zone-content {
+        text-align: center;
+        color: #3b82f6;
+    }
+
+        .drop-zone-content svg {
+            margin-bottom: 16px;
+            opacity: 0.7;
+        }
+
+        .drop-zone-content p {
+            font-size: 18px;
+            font-weight: 500;
+            margin: 0;
+        }
+
+    .instructions-overlay {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 16px;
+        max-width: 300px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        backdrop-filter: blur(8px);
+    }
+
+    .instructions-content h3 {
+        margin: 0 0 12px 0;
+        font-size: 16px;
+        color: #374151;
+    }
+
+    .instructions-content ul {
+        margin: 0;
+        padding-left: 16px;
+        list-style: none;
+    }
+
+    .instructions-content li {
+        margin-bottom: 8px;
         font-size: 14px;
-        transition: all 0.2s ease;
+        color: #6b7280;
+        position: relative;
     }
 
-    .btn-outline-primary {
-        border: 1px solid #007bff;
-        color: #007bff;
-        background: transparent;
+    .instructions-content li:before {
+        content: "•";
+        color: #3b82f6;
+        font-weight: bold;
+        position: absolute;
+        left: -12px;
     }
 
-    .btn-outline-primary:hover {
-        background-color: #007bff;
-        color: white;
+
+
+    :global(.diagram-container) {
+        background: transparent !important;
     }
 
-    .btn-outline-secondary {
-        border: 1px solid #6c757d;
-        color: #6c757d;
-        background: transparent;
+    :global(.diagram-canvas) {
+        background: transparent !important;
     }
 
-    .btn-outline-secondary:hover {
-        background-color: #6c757d;
-        color: white;
+    /* Custom node positioning */
+    :global(.workflow-node) {
+        z-index: 100;
     }
-</style> 
+
+    :global(.workflow-node.selected) {
+        z-index: 200;
+    }
+
+    /* Animated dashed links */
+    :global(.diagram-link path) {
+        stroke: #6b7280;
+        stroke-width: 2px;
+        fill: none;
+        cursor: pointer;
+        stroke-dasharray: 6;
+        stroke-dashoffset: 0;
+        animation: dashmove 1s linear infinite;
+    }
+
+    :global(.diagram-link:hover path) {
+        stroke: #3b82f6;
+        stroke-width: 3px;
+    }
+
+    :global(.diagram-link.selected path) {
+        stroke: #3b82f6;
+        stroke-width: 3px;
+        filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.4));
+    }
+
+    /* Port styles - Support both diagram-port and workflow-port classes */
+    :global(.diagram-port), :global(.workflow-port) {
+        fill: #3b82f6 !important;
+        stroke: #1d4ed8 !important;
+        stroke-width: 2px !important;
+        r: 6px !important;
+        cursor: crosshair !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        z-index: 1000 !important;
+        pointer-events: all !important;
+    }
+
+    :global(.diagram-port:hover), :global(.workflow-port:hover) {
+        fill: #10b981 !important;
+        stroke: #047857 !important;
+        r: 8px !important;
+        transform: scale(1.2) !important;
+    }
+
+    /* Ensure WorkflowNode containers don't interfere with ports */
+    :global(.workflow-node-container) {
+        overflow: visible !important;
+        position: relative !important;
+    }
+</style>
+
+<script>
+    // Simple global variable for drag and drop
+    window.dragNodeType = null;
+</script> 

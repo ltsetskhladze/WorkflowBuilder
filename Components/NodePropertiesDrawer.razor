@@ -1,0 +1,627 @@
+@using WorkflowBuilder.Models
+@namespace WorkflowBuilder.Components
+
+<div class="properties-drawer @(IsOpen ? "open" : "")">
+    <div class="drawer-header">
+        <h3>@(SelectedNode?.Title ?? "Node Properties")</h3>
+        <button class="close-btn" @onclick="Close">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+    </div>
+
+    @if (SelectedNode != null)
+    {
+        <div class="drawer-content">
+            <!-- Basic Properties -->
+            <div class="property-group">
+                <label class="property-label">Title</label>
+                <input type="text" class="property-input" @bind="SelectedNode.Title" @bind:event="oninput" />
+            </div>
+
+            <div class="property-group">
+                <label class="property-label">Label</label>
+                <input type="text" class="property-input" @bind="SelectedNode.Label" @bind:event="oninput" />
+            </div>
+
+            <div class="property-group">
+                <label class="property-label">Description</label>
+                <textarea class="property-textarea" @bind="SelectedNode.Description" @bind:event="oninput" rows="3"></textarea>
+            </div>
+
+            <!-- Filters Section -->
+            <div class="property-section">
+                <h4>Filters</h4>
+                @if (SelectedNode.Filters.Any())
+                {
+                    @foreach (var filter in SelectedNode.Filters)
+                    {
+                        <div class="filter-row">
+                            <input type="text" class="property-input filter-field" @bind="filter.Field" @bind:event="oninput" placeholder="Field Name" />
+                            <select class="property-select filter-condition" @bind="filter.Operator">
+                                <option value="Equals">Equals</option>
+                                <option value="NotEquals">Not Equals</option>
+                                <option value="GreaterThan">Greater Than</option>
+                                <option value="LessThan">Less Than</option>
+                                <option value="Contains">Contains</option>
+                                <option value="StartsWith">Starts With</option>
+                                <option value="EndsWith">Ends With</option>
+                                <option value="In">In</option>
+                                <option value="IsEmpty">Is Empty</option>
+                                <option value="IsNotEmpty">Is Not Empty</option>
+                            </select>
+                            <input type="text" class="property-input filter-value" @bind="filter.Value" @bind:event="oninput" placeholder="Value" />
+                            <button class="remove-filter-btn" @onclick="() => RemoveFilter(filter)">×</button>
+                        </div>
+                    }
+                }
+                <button class="add-filter-btn" @onclick="AddFilter">+ Add Filter</button>
+            </div>
+
+            <!-- Node Type Specific Properties -->
+            @if (SelectedNode.NodeType == WorkflowNodeType.Start)
+            {
+                <div class="property-section">
+                    <h4>Start Settings</h4>
+                    <div class="property-group">
+                        <label class="property-label">Trigger Type</label>
+                        <select class="property-select" @bind="TriggerType">
+                            <option value="manual">Manual</option>
+                            <option value="schedule">Schedule</option>
+                            <option value="webhook">Webhook</option>
+                            <option value="event">Event</option>
+                        </select>
+                    </div>
+                    @if (TriggerType == "schedule")
+                    {
+                        <div class="property-group">
+                            <label class="property-label">Cron Expression</label>
+                            <input type="text" class="property-input" @bind="CronExpression" placeholder="0 0 * * *" />
+                        </div>
+                    }
+                </div>
+            }
+            else if (SelectedNode.NodeType == WorkflowNodeType.IfCondition)
+            {
+                <div class="property-section">
+                    <h4>If Condition Settings</h4>
+                    <div class="property-group">
+                        <label class="property-label">Left Value</label>
+                        <input type="text" class="property-input" @bind="ConditionLeft" />
+                    </div>
+                    <div class="property-group">
+                        <label class="property-label">Operator</label>
+                        <select class="property-select" @bind="ConditionOperator">
+                            <option value="equals">Equals</option>
+                            <option value="not-equals">Not Equals</option>
+                            <option value="greater">Greater Than</option>
+                            <option value="less">Less Than</option>
+                            <option value="contains">Contains</option>
+                            <option value="starts-with">Starts With</option>
+                            <option value="ends-with">Ends With</option>
+                        </select>
+                    </div>
+                    <div class="property-group">
+                        <label class="property-label">Right Value</label>
+                        <input type="text" class="property-input" @bind="ConditionRight" />
+                    </div>
+                </div>
+            }
+            else if (SelectedNode.NodeType == WorkflowNodeType.Switch)
+            {
+                <div class="property-section">
+                    <h4>Switch Settings</h4>
+                    <div class="property-group">
+                        <label class="property-label">Switch Variable</label>
+                        <input type="text" class="property-input" @bind="SwitchVariable" placeholder="variable" />
+                    </div>
+                    <div class="property-group">
+                        <label class="property-label">Default Path</label>
+                        <input type="text" class="property-input" @bind="SwitchDefault" placeholder="default" />
+                    </div>
+                </div>
+            }
+            else if (SelectedNode.NodeType == WorkflowNodeType.ForEach)
+            {
+                <div class="property-section">
+                    <h4>For Each Settings</h4>
+                    <div class="property-group">
+                        <label class="property-label">Collection</label>
+                        <input type="text" class="property-input" @bind="ForEachCollection" placeholder="items" />
+                    </div>
+                    <div class="property-group">
+                        <label class="property-label">Item Variable</label>
+                        <input type="text" class="property-input" @bind="ForEachItem" placeholder="item" />
+                    </div>
+                    <div class="property-group">
+                        <label class="property-label">Parallel Execution</label>
+                        <select class="property-select" @bind="ForEachParallel">
+                            <option value="false">Sequential</option>
+                            <option value="true">Parallel</option>
+                        </select>
+                    </div>
+                </div>
+            }
+            else if (SelectedNode.NodeType == WorkflowNodeType.Scope)
+            {
+                <div class="property-section">
+                    <h4>Scope Settings</h4>
+                    <div class="property-group">
+                        <label class="property-label">Scope Name</label>
+                        <input type="text" class="property-input" @bind="ScopeName" placeholder="Scope name" />
+                    </div>
+                    <div class="property-group">
+                        <label class="property-label">Error Handling</label>
+                        <select class="property-select" @bind="ScopeErrorHandling">
+                            <option value="stop">Stop on error</option>
+                            <option value="continue">Continue on error</option>
+                            <option value="retry">Retry on error</option>
+                        </select>
+                    </div>
+                </div>
+            }
+            else if (SelectedNode.NodeType == WorkflowNodeType.End)
+            {
+                <div class="property-section">
+                    <h4>End Settings</h4>
+                    <div class="property-group">
+                        <label class="property-label">Completion Status</label>
+                        <select class="property-select" @bind="EndStatus">
+                            <option value="success">Success</option>
+                            <option value="failure">Failure</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="property-group">
+                        <label class="property-label">Final Message</label>
+                        <input type="text" class="property-input" @bind="EndMessage" placeholder="Workflow completed" />
+                    </div>
+                </div>
+            }
+            else if (SelectedNode.NodeType == WorkflowNodeType.Basic)
+            {
+                <div class="property-section">
+                    <h4>Action Settings</h4>
+                    <div class="property-group">
+                        <label class="property-label">Action Type</label>
+                        <select class="property-select" @bind="ActionType">
+                            <option value="http">HTTP Request</option>
+                            <option value="email">Send Email</option>
+                            <option value="data">Data Transform</option>
+                            <option value="custom">Custom Script</option>
+                        </select>
+                    </div>
+                    @if (ActionType == "http")
+                    {
+                        <div class="property-group">
+                            <label class="property-label">URL</label>
+                            <input type="text" class="property-input" @bind="HttpUrl" placeholder="https://api.example.com" />
+                        </div>
+                        <div class="property-group">
+                            <label class="property-label">Method</label>
+                            <select class="property-select" @bind="HttpMethod">
+                                <option value="GET">GET</option>
+                                <option value="POST">POST</option>
+                                <option value="PUT">PUT</option>
+                                <option value="DELETE">DELETE</option>
+                            </select>
+                        </div>
+                    }
+                </div>
+            }
+
+            <!-- Custom Properties -->
+            <div class="property-section">
+                <h4>Custom Properties</h4>
+                @foreach (var prop in CustomProperties)
+                {
+                    <div class="property-group custom-property">
+                        <input type="text" class="property-input small" @bind="prop.Key" placeholder="Key" />
+                        <input type="text" class="property-input" @bind="prop.Value" placeholder="Value" />
+                        <button class="remove-btn" @onclick="() => RemoveCustomProperty(prop.Key)">×</button>
+                    </div>
+                }
+                <button class="add-property-btn" @onclick="AddCustomProperty">+ Add Property</button>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public WorkflowNode? SelectedNode { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private string TriggerType 
+    { 
+        get => SelectedNode?.Properties.GetValueOrDefault("triggerType", "manual")?.ToString() ?? "manual";
+        set => SetProperty("triggerType", value);
+    }
+
+    private string CronExpression
+    {
+        get => SelectedNode?.Properties.GetValueOrDefault("cronExpression", "")?.ToString() ?? "";
+        set => SetProperty("cronExpression", value);
+    }
+
+    private string ConditionLeft
+    {
+        get => SelectedNode?.Properties.GetValueOrDefault("conditionLeft", "")?.ToString() ?? "";
+        set => SetProperty("conditionLeft", value);
+    }
+
+    private string ConditionOperator
+    {
+        get => SelectedNode?.Properties.GetValueOrDefault("conditionOperator", "equals")?.ToString() ?? "equals";
+        set => SetProperty("conditionOperator", value);
+    }
+
+    private string ConditionRight
+    {
+        get => SelectedNode?.Properties.GetValueOrDefault("conditionRight", "")?.ToString() ?? "";
+        set => SetProperty("conditionRight", value);
+    }
+
+    private string ForEachCollection
+    {
+        get => SelectedNode?.Properties.GetValueOrDefault("forEachCollection", "")?.ToString() ?? "";
+        set => SetProperty("forEachCollection", value);
+    }
+
+    private string ForEachItem
+    {
+        get => SelectedNode?.Properties.GetValueOrDefault("forEachItem", "")?.ToString() ?? "";
+        set => SetProperty("forEachItem", value);
+    }
+
+    private string ActionType
+    {
+        get => SelectedNode?.Properties.GetValueOrDefault("actionType", "http")?.ToString() ?? "http";
+        set => SetProperty("actionType", value);
+    }
+
+    private string HttpUrl
+    {
+        get => SelectedNode?.Properties.GetValueOrDefault("httpUrl", "")?.ToString() ?? "";
+        set => SetProperty("httpUrl", value);
+    }
+
+    private string HttpMethod
+    {
+        get => SelectedNode?.Properties.GetValueOrDefault("httpMethod", "GET")?.ToString() ?? "GET";
+        set => SetProperty("httpMethod", value);
+    }
+
+    // Switch node properties
+    private string SwitchVariable
+    {
+        get => SelectedNode?.Properties.GetValueOrDefault("switchVariable", "")?.ToString() ?? "";
+        set => SetProperty("switchVariable", value);
+    }
+
+    private string SwitchDefault
+    {
+        get => SelectedNode?.Properties.GetValueOrDefault("switchDefault", "")?.ToString() ?? "";
+        set => SetProperty("switchDefault", value);
+    }
+
+    // ForEach node additional properties
+    private string ForEachParallel
+    {
+        get => SelectedNode?.Properties.GetValueOrDefault("forEachParallel", "false")?.ToString() ?? "false";
+        set => SetProperty("forEachParallel", value);
+    }
+
+    // Scope node properties
+    private string ScopeName
+    {
+        get => SelectedNode?.Properties.GetValueOrDefault("scopeName", "")?.ToString() ?? "";
+        set => SetProperty("scopeName", value);
+    }
+
+    private string ScopeErrorHandling
+    {
+        get => SelectedNode?.Properties.GetValueOrDefault("scopeErrorHandling", "stop")?.ToString() ?? "stop";
+        set => SetProperty("scopeErrorHandling", value);
+    }
+
+    // End node properties
+    private string EndStatus
+    {
+        get => SelectedNode?.Properties.GetValueOrDefault("endStatus", "success")?.ToString() ?? "success";
+        set => SetProperty("endStatus", value);
+    }
+
+    private string EndMessage
+    {
+        get => SelectedNode?.Properties.GetValueOrDefault("endMessage", "")?.ToString() ?? "";
+        set => SetProperty("endMessage", value);
+    }
+
+    private List<PropertyItem> CustomProperties = new();
+
+    protected override void OnParametersSet()
+    {
+        if (SelectedNode != null)
+        {
+            RefreshCustomProperties();
+        }
+    }
+
+    private void SetProperty(string key, object value)
+    {
+        if (SelectedNode != null)
+        {
+            SelectedNode.Properties[key] = value;
+            StateHasChanged();
+        }
+    }
+
+    private void RefreshCustomProperties()
+    {
+        CustomProperties.Clear();
+        if (SelectedNode?.Properties != null)
+        {
+            var excludedKeys = new[] { 
+                "triggerType", "cronExpression", "conditionLeft", "conditionOperator", "conditionRight", 
+                "forEachCollection", "forEachItem", "forEachParallel", "actionType", "httpUrl", "httpMethod",
+                "switchVariable", "switchDefault", "scopeName", "scopeErrorHandling", "endStatus", "endMessage"
+            };
+            
+            foreach (var prop in SelectedNode.Properties.Where(p => !excludedKeys.Contains(p.Key)))
+            {
+                CustomProperties.Add(new PropertyItem { Key = prop.Key, Value = prop.Value?.ToString() ?? "" });
+            }
+        }
+    }
+
+    private void AddCustomProperty()
+    {
+        CustomProperties.Add(new PropertyItem { Key = "", Value = "" });
+        StateHasChanged();
+    }
+
+    private void RemoveCustomProperty(string key)
+    {
+        CustomProperties.RemoveAll(p => p.Key == key);
+        if (SelectedNode?.Properties.ContainsKey(key) == true)
+        {
+            SelectedNode.Properties.Remove(key);
+        }
+        StateHasChanged();
+    }
+
+    private void AddFilter()
+    {
+        SelectedNode?.Filters.Add(new FilterCondition("", "Equals", ""));
+        StateHasChanged();
+    }
+
+    private void RemoveFilter(FilterCondition filter)
+    {
+        SelectedNode?.Filters.Remove(filter);
+        StateHasChanged();
+    }
+
+    private async Task Close()
+    {
+        await OnClose.InvokeAsync();
+    }
+
+    private class PropertyItem
+    {
+        public string Key { get; set; } = "";
+        public string Value { get; set; } = "";
+    }
+}
+
+<style>
+.properties-drawer {
+    position: fixed;
+    top: 0;
+    right: -400px;
+    width: 400px;
+    height: 100vh;
+    background: white;
+    border-left: 1px solid #e5e7eb;
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
+    transition: right 0.3s ease;
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+.properties-drawer.open {
+    right: 0;
+}
+
+.drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f9fafb;
+}
+
+.drawer-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.close-btn:hover {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.drawer-content {
+    padding: 20px;
+}
+
+.property-section {
+    margin-bottom: 32px;
+}
+
+.property-section h4 {
+    margin: 0 0 16px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 8px;
+}
+
+.property-group {
+    margin-bottom: 16px;
+}
+
+.property-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.property-input,
+.property-textarea,
+.property-select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.15s ease;
+}
+
+.property-input:focus,
+.property-textarea:focus,
+.property-select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.custom-property {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.property-input.small {
+    width: 120px;
+}
+
+.remove-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 4px;
+    background: #fef2f2;
+    color: #dc2626;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.15s ease;
+}
+
+.remove-btn:hover {
+    background: #fee2e2;
+}
+
+.add-property-btn {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px dashed #d1d5db;
+    border-radius: 6px;
+    background: transparent;
+    color: #6b7280;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.15s ease;
+}
+
+.add-property-btn:hover {
+    border-color: #3b82f6;
+    color: #3b82f6;
+    background: #f8faff;
+}
+
+/* Filter specific styles */
+.filter-row {
+    display: grid;
+    grid-template-columns: 1fr 120px 1fr 32px;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.filter-field {
+    min-width: 0;
+}
+
+.filter-condition {
+    min-width: 0;
+}
+
+.filter-value {
+    min-width: 0;
+}
+
+.remove-filter-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 4px;
+    background: #fef2f2;
+    color: #dc2626;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.15s ease;
+}
+
+.remove-filter-btn:hover {
+    background: #fee2e2;
+}
+
+.add-filter-btn {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px dashed #d1d5db;
+    border-radius: 6px;
+    background: transparent;
+    color: #6b7280;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.15s ease;
+    margin-top: 8px;
+}
+
+.add-filter-btn:hover {
+    border-color: #3b82f6;
+    color: #3b82f6;
+    background: #f8faff;
+}
+</style> 

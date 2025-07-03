@@ -1,0 +1,99 @@
+{
+  "WorkFlowId": 0,
+  "WorkFlowName": "Demo",
+  "WorkflowTypeId": 1,
+  "IsActive": true,
+  "WorkflowActivities": [
+    {
+      "StepNo": 1,
+      "ActivityId": 1001,
+      "Name": "Start Process",
+      "ActivityFeatureType": "RegularBlock",
+      "Label": "Initialize workflow",
+      "Filters": [
+        {
+          "Field": "Status",
+          "Operator": "Equals",
+          "Value": "Active"
+        }
+      ],
+      "WorkflowActivityJumps": [
+        {
+          "ToStepNo": 2,
+          "JumpType": "Default"
+        }
+      ]
+    },
+    {
+      "StepNo": 2,
+      "ActivityId": 1002,
+      "Name": "Check Condition",
+      "ActivityFeatureType": "RegularBlock",
+      "Label": "Validate input data",
+      "Filters": [
+        {
+          "Field": "Amount",
+          "Operator": "GreaterThan",
+          "Value": "100"
+        }
+      ],
+      "WorkflowActivityJumps": [
+        {
+          "ToStepNo": 3,
+          "JumpType": "True"
+        },
+        {
+          "ToStepNo": 5,
+          "JumpType": "False"
+        }
+      ]
+    },
+    {
+      "StepNo": 3,
+      "ActivityId": 1003,
+      "Name": "Process Loop",
+      "ActivityFeatureType": "Foreach",
+      "Label": "Process each item",
+      "Filters": [
+        {
+          "Field": "ItemType",
+          "Operator": "In",
+          "Value": "Product,Service"
+        }
+      ],
+      "WorkflowActivityJumps": [
+        {
+          "ToStepNo": 4,
+          "JumpType": "Loop"
+        },
+        {
+          "ToStepNo": 5,
+          "JumpType": "Done"
+        }
+      ]
+    },
+    {
+      "StepNo": 4,
+      "ActivityId": 1004,
+      "Name": "Process Item",
+      "ActivityFeatureType": "RegularBlock",
+      "Label": "Handle individual item",
+      "Filters": [],
+      "WorkflowActivityJumps": [
+        {
+          "ToStepNo": 3,
+          "JumpType": "Continue"
+        }
+      ]
+    },
+    {
+      "StepNo": 5,
+      "ActivityId": 1005,
+      "Name": "Complete Process",
+      "ActivityFeatureType": "RegularBlock",
+      "Label": "Finalize workflow",
+      "Filters": [],
+      "WorkflowActivityJumps": []
+    }
+  ]
+} 

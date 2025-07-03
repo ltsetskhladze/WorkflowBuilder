@@ -1,0 +1,337 @@
+@using WorkflowBuilder.Models
+@using Blazor.Diagrams.Components.Renderers
+@using Blazor.Diagrams.Core.Geometry
+@using Blazor.Diagrams
+@namespace WorkflowBuilder.Components
+@using Blazor.Diagrams.Core.Models
+@using System.Collections.Generic
+
+<!-- Simple container like working samples -->
+<div class="workflow-node @GetNodeClass()" 
+     @onclick="OnNodeClick" 
+     @onclick:stopPropagation="true"
+     @onmouseenter="OnMouseEnter"
+     @onmouseleave="OnMouseLeave">
+     
+    <!-- Visual content - icon and title in a simple layout -->
+    <div class="node-content">
+        <div class="node-icon">
+            @GetNodeIcon()
+        </div>
+        <div class="node-title">
+            @Node.Title
+        </div>
+    </div>
+    
+    <!-- Render Ports at same level as content - CRITICAL for positioning -->
+    @foreach (var port in Node.Ports)
+    {
+        <PortRenderer Port="port" />
+    }
+
+    <!-- Hover Toolbar -->
+    @if (isHovered)
+    {
+        <div class="node-toolbar">
+            <button class="toolbar-btn edit-btn" @onclick="OnEditClick" @onclick:stopPropagation="true" title="Edit">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2"/>
+                    <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2"/>
+                </svg>
+            </button>
+            <button class="toolbar-btn duplicate-btn" @onclick="OnDuplicateClick" @onclick:stopPropagation="true" title="Duplicate">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="currentColor" stroke-width="2" fill="none"/>
+                    <path d="m5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" stroke-width="2" fill="none"/>
+                </svg>
+            </button>
+            <button class="toolbar-btn delete-btn" @onclick="OnDeleteClick" @onclick:stopPropagation="true" title="Delete">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                    <polyline points="3,6 5,6 21,6" stroke="currentColor" stroke-width="2"/>
+                    <path d="m19,6v14a2,2 0,0 1,-2,2H7a2,2 0,0 1,-2,-2V6m3,0V4a2,2 0,0 1,2,-2h4a2,2 0,0 1,2,2V6" stroke="currentColor" stroke-width="2"/>
+                </svg>
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public WorkflowNode Node { get; set; } = default!;
+    [CascadingParameter] public BlazorDiagram? Diagram { get; set; }
+    
+    private bool isHovered = false;
+
+    private async Task OnNodeClick()
+    {
+        if (Diagram != null)
+        {
+            Diagram.SelectModel(Node, false);
+        }
+        StateHasChanged();
+    }
+
+    private async Task OnEditClick()
+    {
+        await OnNodeClick();
+    }
+
+    private async Task OnDuplicateClick()
+    {
+        if (Diagram != null)
+        {
+            var duplicatedNode = new WorkflowNode(Node.NodeType, new Point(Node.Position.X + 100, Node.Position.Y + 50))
+            {
+                Title = Node.Title + " Copy",
+                Description = Node.Description,
+                Properties = new Dictionary<string, object>(Node.Properties)
+            };
+
+            Diagram.Nodes.Add(duplicatedNode);
+        }
+        StateHasChanged();
+    }
+
+    private async Task OnDeleteClick()
+    {
+        if (Diagram != null)
+        {
+            Diagram.SelectModel(Node, false);
+            Diagram.Nodes.Remove(Node);
+        }
+        StateHasChanged();
+    }
+
+    private void OnMouseEnter()
+    {
+        isHovered = true;
+        StateHasChanged();
+    }
+
+    private void OnMouseLeave()
+    {
+        isHovered = false;
+        StateHasChanged();
+    }
+
+    private string GetNodeClass()
+    {
+        var classes = "workflow-node";
+        if (Node.IsSelected) classes += " selected";
+        return classes;
+    }
+
+    private MarkupString GetNodeIcon()
+    {
+        var icon = Node.NodeType switch
+        {
+            WorkflowNodeType.Start => @"<svg width=""16"" height=""16"" viewBox=""0 0 24 24"" fill=""none"">
+                <path d=""M13 3L4 14h7v7l9-11h-7V3z"" fill=""#7c3aed"" stroke=""#7c3aed"" stroke-width=""1""/>
+            </svg>",
+            
+            WorkflowNodeType.IfCondition => @"<svg width=""16"" height=""16"" viewBox=""0 0 24 24"" fill=""none"">
+                <path d=""M7 8l5 8 5-8M7 8h10"" stroke=""#0ea5e9"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""/>
+            </svg>",
+            
+            WorkflowNodeType.ForEach => @"<svg width=""16"" height=""16"" viewBox=""0 0 24 24"" fill=""none"">
+                <path d=""M8 12a4 4 0 108 0 4 4 0 00-8 0z"" fill=""none"" stroke=""#0ea5e9"" stroke-width=""2""/>
+                <path d=""m15 9 3 3-3 3"" stroke=""#0ea5e9"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""/>
+            </svg>",
+            
+            WorkflowNodeType.Switch => @"<svg width=""16"" height=""16"" viewBox=""0 0 24 24"" fill=""none"">
+                <path d=""M12 3v6m0 6v6m-6-9h12M6 15h12"" stroke=""#0ea5e9"" stroke-width=""2"" stroke-linecap=""round""/>
+            </svg>",
+            
+            WorkflowNodeType.Scope => @"<svg width=""16"" height=""16"" viewBox=""0 0 24 24"" fill=""none"">
+                <rect x=""3"" y=""3"" width=""18"" height=""18"" rx=""2"" ry=""2"" stroke=""#0ea5e9"" stroke-width=""2"" fill=""none""/>
+                <path d=""M9 9h6v6H9z"" stroke=""#0ea5e9"" stroke-width=""1.5"" fill=""none""/>
+            </svg>",
+            
+            WorkflowNodeType.End => @"<svg width=""16"" height=""16"" viewBox=""0 0 24 24"" fill=""none"">
+                <circle cx=""12"" cy=""12"" r=""8"" fill=""#ef4444"" stroke=""#dc2626"" stroke-width=""1""/>
+                <path d=""M15 9l-6 6M9 9l6 6"" stroke=""white"" stroke-width=""2"" stroke-linecap=""round""/>
+            </svg>",
+            
+            WorkflowNodeType.Basic => @"<svg width=""16"" height=""16"" viewBox=""0 0 24 24"" fill=""none"">
+                <rect x=""3"" y=""3"" width=""18"" height=""18"" rx=""2"" ry=""2"" stroke=""#6b7280"" stroke-width=""2"" fill=""none""/>
+                <circle cx=""12"" cy=""12"" r=""3"" fill=""#6b7280""/>
+            </svg>",
+            
+            _ => @"<svg width=""16"" height=""16"" viewBox=""0 0 24 24"" fill=""none"">
+                <circle cx=""12"" cy=""12"" r=""8"" stroke=""#6b7280"" stroke-width=""2"" fill=""none""/>
+            </svg>"
+        };
+        
+        return new MarkupString(icon);
+    }
+}
+
+<style>
+    /* Simple container like working samples */
+    .workflow-node {
+        position: relative;
+        width: 80px;
+        height: 60px;
+        cursor: pointer;
+        user-select: none;
+        background: white;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .workflow-node:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .workflow-node.selected {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    /* Simple content layout */
+    .node-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        padding: 8px;
+    }
+
+    .node-icon {
+        margin-bottom: 4px;
+    }
+
+    .node-title {
+        font-size: 10px;
+        font-weight: 500;
+        color: #374151;
+        text-align: center;
+        line-height: 1.1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 100%;
+    }
+
+    /* === PORT STYLING - From working samples === */
+    
+    /* Show ports on hover or when they have links */
+    .workflow-node:hover .diagram-port {
+        visibility: visible;
+    }
+    
+    /* Base port styling */
+    .workflow-node .diagram-port {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background-color: #3b82f6; /* Blue color */
+        border: 2px solid #1e40af; /* Darker blue border */
+        cursor: pointer;
+        visibility: hidden; /* Hidden by default */
+        position: absolute;
+        z-index: 10;
+        transition: all 0.2s ease;
+    }
+
+    /* Show ports when they have links (active) */
+    .workflow-node .diagram-port.has-links {
+        visibility: visible;
+        background-color: #059669; /* Green when connected */
+        border-color: #047857;
+    }
+
+    /* Port hover state */
+    .workflow-node .diagram-port:hover {
+        visibility: visible;
+        background-color: #059669; /* Green on hover */
+        border-color: #047857;
+        transform: scale(1.1);
+    }
+
+    /* Selected node - show all ports */
+    .workflow-node.selected .diagram-port {
+        visibility: visible;
+    }
+
+    /* Left port positioning */
+    .workflow-node .diagram-port.left {
+        left: -10px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    /* Right port positioning */
+    .workflow-node .diagram-port.right {
+        right: -10px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    /* Top port positioning */
+    .workflow-node .diagram-port.top {
+        top: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    /* Bottom port positioning */
+    .workflow-node .diagram-port.bottom {
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    /* Hover Toolbar */
+    .node-toolbar {
+        position: absolute;
+        top: -35px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 4px;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        padding: 4px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+    }
+
+    .toolbar-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        border: none;
+        border-radius: 4px;
+        background: transparent;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        color: #6b7280;
+    }
+
+    .toolbar-btn:hover {
+        background: #f3f4f6;
+        color: #374151;
+    }
+
+    .edit-btn:hover {
+        background: #dbeafe;
+        color: #2563eb;
+    }
+
+    .duplicate-btn:hover {
+        background: #fef3c7;
+        color: #d97706;
+    }
+
+    .delete-btn:hover {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+</style> 

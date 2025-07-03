@@ -101,3 +101,13 @@ a, .btn-link {
 code {
     color: #c02d76;
 }
+
+/* Workflow Builder - Link Animation */
+@keyframes dashmove {
+    0% {
+        stroke-dashoffset: 0;
+    }
+    100% {
+        stroke-dashoffset: -12;
+    }
+}
